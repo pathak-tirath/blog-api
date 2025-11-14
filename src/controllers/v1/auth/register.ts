@@ -5,6 +5,7 @@ import User from '@/models/v1/users';
 
 import { IUser } from '@/models/v1/users';
 import { generateRandomUserName, hashPassword } from '@/utils';
+import { generateAccessToken, generateRefreshToken } from '@/lib/jwt';
 
 type UserRegistrationData = Pick<IUser, 'email' | 'password' | 'role'>;
 
@@ -20,6 +21,16 @@ const register = async (req: Request, res: Response): Promise<void> => {
     role,
   });
 
+  // Generate access and refresh tokens
+  const accessToken = generateAccessToken(newUser._id);
+  const refreshToken = generateRefreshToken(newUser._id);
+
+  res.cookie('refreshToken', refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+  });
+
   try {
     await newUser.save();
   } catch (error) {
@@ -27,7 +38,13 @@ const register = async (req: Request, res: Response): Promise<void> => {
   }
 
   try {
-    res.status(201).json({ message: 'User registered successfully' });
+    res
+      .status(201)
+      .json({ data: {
+        email: newUser.email,
+        username: newUser.username,
+        role: newUser.role,
+      }, accessToken });
   } catch (error) {
     res.status(500).json({
       code: 'INTERNAL_SERVER_ERROR',
