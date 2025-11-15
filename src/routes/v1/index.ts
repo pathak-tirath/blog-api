@@ -1,8 +1,11 @@
 import express from 'express';
+import authRoutes from '@/routes/v1/auth';
+const router = express.Router();
 
-const routes = express.Router();
+router.use('/auth', authRoutes);
 
-routes.get('/', (req, res) => {
+// Root Route
+router.get('/', (req, res) => {
   res.status(200).json({
     message: 'API is up!',
     status: 'ok',
@@ -11,5 +14,4 @@ routes.get('/', (req, res) => {
   });
 });
 
-
-export default routes;
+export default router;
